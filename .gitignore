@@ -1,0 +1,7 @@
+# general settings
+__pycache__
+.conda
+.ipynb_checkpoints
+**.html
+**.png
+**.zip
