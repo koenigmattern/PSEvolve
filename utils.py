@@ -640,11 +640,6 @@ def cross_over(df_pop, num_parents, num_children, max_mol_weight, group_constrai
                 import ipdb; ipdb.set_trace()
             if Chem.Descriptors.MolWt(comb_mol) > max_mol_weight:
                 flag_comb_successful = 0
-            if group_constraints == 'acid stability' or group_constraints == 'acid stable CO only' \
-                    or group_constraints == 'acid stable CO only sugar':
-                stability_bool = acid_stability_checker(comb_mol)
-                if not stability_bool:
-                    flag_comb_successful = 0
             if SA_max:
                 SA_score = SA.calculateScore(comb_mol)
                 if SA_score > SA_max:
@@ -698,7 +693,7 @@ def calc_prop(mol):
 
     author: laura koenig-mattern
     """
-    prop = Descriptors.MolLogP(mol)
+    prop = Chem.Descriptors.MolLogP(mol)
     #prop = Chem.Crippen.MolLogP(mol)
     return prop
 
@@ -707,18 +702,23 @@ def calc_ring_penalty(mol):
     calculates ring penalty of a molecule. the ring penalty s defined as numbers of rings with more than 6 atoms
     :param mol: rdkit mol ob
     :return: ring penalty
+
+    author: laura koenig-mattern
     """
+
     ri = mol.GetRingInfo()
 
-    penalised_rings = []
-    for ring in ri.AtomRings():
-        if len(ring) > 6:
-            penalised_rings.append(1)
-
-    if len(penalised_rings) > 0:
-        ring_penalty = sum(penalised_rings)
-    else:
+    if len(ri.AtomRings()) == 0:
         ring_penalty = 0
+    else:
+        penalised_rings = []
+        for ring in ri.AtomRings():
+            penalty_single = len(ring) - 6
+            if penalty_single < 0:
+                penalty_single = 0
+            penalised_rings.append(penalty_single)
+            ring_penalty = sum(penalised_rings)
+
 
     return ring_penalty
 
@@ -729,6 +729,8 @@ def get_fitness_vals(df_pop):
 
     :param df_pop: pandas dataframe of population
     :return: df_pop: pandas dataframe of population, updated values
+
+    author: laura koenig-mattern
     """
 
     df_pop['mol'] = df_pop['smi'].apply(Chem.MolFromSmiles)
