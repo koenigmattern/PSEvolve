@@ -1,9 +1,0 @@
-;0
-population_size;1000.0
-number of generations;1000.0
-mutation rate;0.1
-number of parent molecules;50.0
-number of children;100.0
-maximum mol weight [g/mol];1000.0
-constraints on functional groups;
-maximum synthetic accessibility score;3.5
