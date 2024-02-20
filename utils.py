@@ -725,7 +725,7 @@ def calc_ring_penalty(mol):
 def get_fitness_vals(df_pop):
     """
     define your fitness_function here!
-    as an example, we use rdkit's logP function
+    as an example, we use rdkit's logP function, SAS and a ring penalty
 
     :param df_pop: pandas dataframe of population
     :return: df_pop: pandas dataframe of population, updated values
