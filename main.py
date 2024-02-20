@@ -12,12 +12,11 @@ generations = 1000
 mutation_rate = 0.1 # initial mutation rate
 num_parents = 50
 num_children = num_parents*2
-max_mol_weight = 200 # g/mol
+max_mol_weight = 1000 # g/mol
 group_constraints = None #None, or 'acid stability'
 SA_max = 3.5
+num_fittest = 5000 # number of fittest molecules that are saved in results dataframe
 
-# number of fittest molecules to be saved
-num_fittest = 5000
 # save dataframes of all postprocessed populations: 0 - false, 1- true
 save_all_pops_flag = 0
 

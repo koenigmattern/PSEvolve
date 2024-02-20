@@ -1,4 +1,3 @@
-import ipdb
 import numpy as np
 import pandas as pd
 from rdkit import Chem
@@ -6,7 +5,6 @@ from rdkit.Chem import Draw
 from rdkit.Chem.Draw import DrawingOptions
 import networkx as nx
 import copy
-import thermo
 import os
 import matplotlib.pyplot as plt
 from rdkit.Chem import Descriptors
@@ -81,6 +79,7 @@ def generate_random_start_pop(pop_size, SA_max, max_mol_weight):
 
     else:
         df_pop = pd.read_csv('random_start_pop.csv')
+        df_pop['mol'] = df_pop['smi'].apply(Chem.MolFromSmiles)
 
     return df_pop
 
@@ -129,121 +128,6 @@ def get_explicit_valences(mol):
         atom_symbol_list.append(symbol)
         valence_list.append(valence)
     return atom_idx_list, atom_symbol_list, valence_list
-
-def get_possible_connections(atom_valences_1, atom_valences_2):
-    # get indices for both mols where atom valences are > 0 (-> nonzero)
-    nz_idx_1 = np.nonzero(atom_valences_1)
-    nz_idx_2 = np.nonzero(atom_valences_2)
-    combis = np.array(np.meshgrid(nz_idx_1, nz_idx_2))
-
-    return combis
-def choose_connection(combis):
-    try:
-        rand_combi_1 = np.random.randint(len(combis[0]))
-        rand_combi_2 = np.random.randint(len(combis[0][0]))
-        conn_idx_mol1 = int(combis[0][rand_combi_1][rand_combi_2])
-        conn_idx_mol2 = int(combis[1][rand_combi_1][rand_combi_2])
-    except:
-        print('error in ' + choose_connection.__name__)
-        import ipdb; ipdb.set_trace()
-
-    return conn_idx_mol1, conn_idx_mol2
-
-def choose_two_random_mols_and_combine(num_frags):
-    """ combine means combine into one rdkit molobj"""
-    # randomly pick a first fragment from the fragment list using a random number
-    rand_int_1 = np.random.randint(num_frags)
-    start_frag_mol = frag_mol_list[rand_int_1]
-
-    # randomly decide if another fragment should be attached
-    rand_int = 1  # np.random.randint(2)
-
-    #if rand_int == 0:
-        #pop_list.append(start_frag_mol)
-    if rand_int == 1:
-        # draw a second random number and draw another random fragment
-        rand_int_2 = np.random.randint(num_frags)
-        add_frag_mol = frag_mol_list[rand_int_2]
-
-        #### connect the fragments ####
-        # remove all H atoms from both fragments
-        start_frag_mol = Chem.RemoveAllHs(start_frag_mol)
-        num_atoms_1 = start_frag_mol.GetNumAtoms()
-        # for atom in start_frag_mol.GetAtoms():
-        #    # For each atom, set the property "atomNote" to a index+1 of the atom
-        #    atom.SetProp("atomNote", str(atom.GetIdx()))
-
-        add_frag_mol = Chem.RemoveAllHs(add_frag_mol)
-        num_atoms_2 = add_frag_mol.GetNumAtoms()
-        for atom in add_frag_mol.GetAtoms():
-            # For each atom, set the property "atomNote" to a index+1 of the atom
-            atom.SetProp("atomNote", str(atom.GetIdx()))
-
-        # combine mols
-        new_mol = Chem.CombineMols(start_frag_mol, add_frag_mol)
-        for atom in new_mol.GetAtoms():
-            #For each atom, set the property "atomNote" to a index+1 of the atom
-            atom.SetProp("atomNote", str(atom.GetIdx()))
-
-        DrawingOptions.includeAtomNumbers = True
-        # Draw.MolToFile(start_frag_mol, 'start_mol.png')
-        # Draw.MolToFile(add_frag_mol, 'add_mol.png')
-        # Draw.MolToFile(new_mol, 'new_mol.png')
-    return start_frag_mol, add_frag_mol, new_mol, num_atoms_1, num_atoms_2
-
-def append_random_fragments(frag_mol_list, pop_size):
-    # existing mol -> add frag randomly chosen from pool of frags
-
-    num_frags = len(frag_mol_list)
-    pop_list = []
-
-    for i in range(pop_size):
-        # choose two random fragments from the fragment list and combine both into one mol object
-        # start_frag_mol - first mol
-        # add frag mol - second mol
-        # new_mol - both in one object but not bonded yet
-        start_frag_mol, add_frag_mol, new_mol, num_atoms_1, num_atoms_2 = choose_two_random_mols_and_combine(num_frags)
-
-        # get valences off all atoms in both mols
-        start_frag_atom_idx, start_frag_symbols, start_frag_vals = get_valences(start_frag_mol)
-        add_frag_atom_idx, add_frag_symbols, add_frag_vals = get_valences(add_frag_mol)
-
-        # get possible atom combinations
-        combis = get_possible_connections(start_frag_vals, add_frag_vals)
-
-        if combis.size == 0:
-            continue
-
-        # randomly choose indices for connectiom
-        conn_idx_mol1, conn_idx_mol2 = choose_connection(combis)
-        new_mol_conn_idx_2 = conn_idx_mol2 + num_atoms_1
-
-        # get symbol and valences of index
-        valence_1 = start_frag_mol.GetAtomWithIdx(conn_idx_mol1).GetImplicitValence()
-        symbol_1 = start_frag_mol.GetAtomWithIdx(conn_idx_mol1).GetSymbol()
-        valence_2 = add_frag_mol.GetAtomWithIdx(conn_idx_mol2).GetImplicitValence()
-        symbol_2 = add_frag_mol.GetAtomWithIdx(conn_idx_mol2).GetSymbol()
-        isaromatic_1 = start_frag_mol.GetAtomWithIdx(conn_idx_mol1).GetIsAromatic()
-        isaromatic_2 = add_frag_mol.GetAtomWithIdx(conn_idx_mol2).GetIsAromatic()
-
-        rw_newmol = Chem.RWMol(new_mol)
-        if (valence_1 < 2 or valence_2 < 2):
-            # only single bond possible
-            if not isaromatic_1 and not isaromatic_2:
-                rw_newmol.AddBond(conn_idx_mol1, new_mol_conn_idx_2, order=Chem.BondType.SINGLE)
-            else:
-                rw_newmol.AddBond(conn_idx_mol1, new_mol_conn_idx_2, order=Chem.BondType.UNSPECIFIED)
-        else:
-            # pick random number: either single or double bond
-            rand_int_bond = np.random.randint(2)
-            if rand_int_bond == 0:
-                if not isaromatic_1 and not isaromatic_2:
-                    rw_newmol.AddBond(conn_idx_mol1, new_mol_conn_idx_2, order=Chem.BondType.SINGLE)
-                else:
-                    rw_newmol.AddBond(conn_idx_mol1, new_mol_conn_idx_2, order=Chem.BondType.UNSPECIFIED)
-            if rand_int_bond == 1:
-                rw_newmol.AddBond(conn_idx_mol1, new_mol_conn_idx_2, order=Chem.rdchem.BondType.DOUBLE)
-    return
 
 def deletion(mol):
     """
@@ -324,8 +208,6 @@ def fragmentor(mol):
     """
 
     flag_successful = 0
-
-
     num_bonds = mol.GetNumBonds()
 
     if num_bonds >= 1:
@@ -616,7 +498,7 @@ def bond_mutation(mol):
     """
     flag_successful = 0
 
-    ini_mol = mol
+    ini_mol = copy.deepcopy(mol)
 
     bonds = [bond for bond in mol.GetBonds()]
     atom_idx_list, atom_symbol_list, valence_list = get_valences(mol)
@@ -720,10 +602,10 @@ def cross_over(df_pop, num_parents, num_children, max_mol_weight, group_constrai
     # fragment the chosen molecules and add fragments to pool
     frag_pool = []
     for idx in selected_idxs:
+
         mol = df_pop.loc[idx, 'mol']
 
         frag_mol, flag_successful = fragmentor(mol)
-
 
         if flag_successful == 1:
             frags = Chem.GetMolFrags(frag_mol, asMols=True)
@@ -816,8 +698,29 @@ def calc_prop(mol):
 
     author: laura koenig-mattern
     """
-    prop = Chem.Crippen.MolLogP(mol)
+    prop = Descriptors.MolLogP(mol)
+    #prop = Chem.Crippen.MolLogP(mol)
     return prop
+
+def calc_ring_penalty(mol):
+    """
+    calculates ring penalty of a molecule. the ring penalty s defined as numbers of rings with more than 6 atoms
+    :param mol: rdkit mol ob
+    :return: ring penalty
+    """
+    ri = mol.GetRingInfo()
+
+    penalised_rings = []
+    for ring in ri.AtomRings():
+        if len(ring) > 6:
+            penalised_rings.append(1)
+
+    if len(penalised_rings) > 0:
+        ring_penalty = sum(penalised_rings)
+    else:
+        ring_penalty = 0
+
+    return ring_penalty
 
 def get_fitness_vals(df_pop):
     """
@@ -831,6 +734,10 @@ def get_fitness_vals(df_pop):
     df_pop['mol'] = df_pop['smi'].apply(Chem.MolFromSmiles)
     df_pop['prop'] = df_pop['mol'].apply(calc_prop)
     df_pop['fitness value'] = df_pop['prop']
+
+    # fitness function frequently used for benchmarking: lopP - SAS - Ringpenalty
+    df_pop['fitness value'] = df_pop['prop'] - df_pop['mol'].apply(SA.calculateScore) - \
+                              df_pop['mol'].apply(calc_ring_penalty)
 
     return df_pop
 def get_random_frag():
@@ -1216,14 +1123,8 @@ def split_ring(mol):
     return frag_mol, flag_successful
 
 def mutation_mol_constrainer(group_constraints, max_mol_weight, flag_successful, mol, mut_mol, SA_max):
-    #import ipdb; ipdb.set_trace()
     if flag_successful == 1:
         mol_wt = Chem.Descriptors.MolWt(mol)
-        if group_constraints == 'acid stability':
-            stability_bool = acid_stability_checker(mol)
-            if not stability_bool:
-                flag_successful = 0
-                mol = mut_mol
         if mol_wt > max_mol_weight:
             flag_successful = 0
             mol = mut_mol
@@ -1242,23 +1143,6 @@ def mol_cleaner(mol):
     Chem.SanitizeMol(mol)
     return mol
 
-def mutation_debugger(flag_successful, mol):
-    if flag_successful == 1:
-        bond_list_mol = [i.GetBondType() for i in mol.GetBonds()]
-        mol2 = Chem.MolFromSmiles(Chem.MolToSmiles(mol))
-        bond_list_mol2 = [i.GetBondType() for i in mol2.GetBonds()]
-        smi = Chem.MolToSmiles(mol)
-        smi2 = Chem.MolToSmiles(mol2)
-        Draw.MolToFile(mol, './figures/quest_mol.png')
-        Draw.MolToFile(mol2, './figures/quest_mol_smi.png')
-        Chem.SanitizeMol(mol)
-        smi_san = Chem.MolToSmiles(mol)
-        Draw.MolToFile(mol, './figures/quest_mol_san.png')
-
-        if bond_list_mol != bond_list_mol2:
-            import ipdb;
-            ipdb.set_trace()
-    return
 def mutation(df_pop, mutation_rate, max_mol_weight, group_constraints, SA_max):
     """
     randomly choose mutation and perform the chosen operation.
@@ -1369,62 +1253,6 @@ def mutation(df_pop, mutation_rate, max_mol_weight, group_constraints, SA_max):
 
     return df_pop
 
-
-def acid_stability_checker(mol):
-    """
-    checks for acid stability and aldehyde-reactivity
-
-    :param mol: rdkit mol obj
-    :return: stability bool: 0 not suitable, 1 - suitable
-
-    author: laura koenig-mattern
-    """
-
-    smi = Chem.MolToSmiles(mol)
-    mol = Chem.MolFromSmiles(smi)
-
-    ## looking for acid unstable groups or groups that are unstable with aldehyde
-    num_ester = Chem.Fragments.fr_ester(mol)
-    num_isocyan = Chem.Fragments.fr_isocyan(mol)
-    num_nitrile = Chem.Fragments.fr_nitrile(mol)
-    num_Ar_N = Chem.Fragments.fr_Ar_N(mol)
-    num_prim_amines = Chem.Fragments.fr_NH2(mol)
-    num_sec_amines = Chem.Fragments.fr_NH1(mol)
-    num_aldehydes = Chem.Fragments.fr_aldehyde(mol)
-    hydrazide_pattern = Chem.MolFromSmiles('C(=O)NN*')
-    num_hydrazide = len(list(mol.GetSubstructMatch(hydrazide_pattern)))
-    hydrazide_pattern_2 = Chem.MolFromSmiles('N:N:C=O')
-    num_hydrazide_2 = len(list(mol.GetSubstructMatch(hydrazide_pattern_2)))
-    anhydride_pattern = Chem.MolFromSmiles('C(=O)OC(=O)')
-    num_anhydride = len(list(mol.GetSubstructMatch(anhydride_pattern)))
-    sulfonic_acid_pattern = Chem.MolFromSmarts('[$([#16X4](=[OX1])(=[OX1])([#6])[OX2H,OX1H0-]),$([#16X4+2]([OX1-])([OX1-])([#6])[OX2H,OX1H0-])]')
-    num_sulf_acid = len(list(mol.GetSubstructMatch(sulfonic_acid_pattern)))
-    pattern_OH = Chem.MolFromSmarts('[OX2H]')
-    num_OH_pattern = len(list(mol.GetSubstructMatch(pattern_OH)))
-    num_OH = num_OH_pattern # + Chem.Fragments.fr_Al_OH(mol) + Chem.Fragments.fr_Ar_OH(mol)
-    num_COOH = Chem.Fragments.fr_COO(mol)
-
-    group_nums = np.array((num_ester,
-                           num_isocyan,
-                           num_nitrile,
-                           num_hydrazide,
-                           num_hydrazide_2,
-                           num_anhydride,
-                           num_prim_amines,
-                           num_sec_amines,
-                           num_aldehydes,
-                           num_Ar_N,
-                           num_sulf_acid,
-                           num_OH,
-                           num_COOH
-                           ))
-
-    if all(group_nums == 0):
-        stability_bool = True
-    else:
-        stability_bool = False
-
-    return stability_bool
 
 def get_all_time_fittest(df_fittest, df_pop, num_fittest):
     df_fittest = df_fittest.append(df_pop, ignore_index=True)
@@ -1550,7 +1378,7 @@ def post_process(df_pop, df_fittest, df_stats, df_groups, save_all_pops_flag, ge
 
     #import ipdb; ipdb.set_trace()
     try:
-        img = Draw.MolsToGridImage(mol_list, legends=[str(round(i,2)) for i in props], molsPerRow=5, subImgSize=(200, 200),returnPNG=False, maxMols=500)
+        img = Draw.MolsToGridImage(mol_list, molsPerRow=5, subImgSize=(200, 200),returnPNG=False, maxMols=500)
         img.save(fig_path)
 
     except:
