@@ -2,8 +2,9 @@
 
 
 ## Description
-
+<p align="center">
 <img src="https://github.com/koenigmattern/PSEvolve/blob/main/auxil/PSEvolve_logo.png" width="300">
+</p>
 
 PSEvolve is a graph-based genetic algorithm for molecular design PSEvolve was tailored for designing
 solvents with high lignin solubilities [here](https://github.com/koenigmattern/PSEvolve_lignin_solvents).
