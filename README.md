@@ -3,7 +3,7 @@
 
 ## Description
 <p align="center">
-<img src="https://github.com/koenigmattern/PSEvolve/blob/master/auxil/PSEvolve_logo.png width="300">
+<img src="./auxil/PSEvolve_logo.png width="300">
 </p>
 
 PSEvolve is a graph-based genetic algorithm for molecular design PSEvolve was tailored for designing
