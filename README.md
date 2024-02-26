@@ -28,7 +28,7 @@ year  ="2024"
 
 <!--- 
 ```
-@Article{XXX,
+@Article{
 author ="Laura König-Mattern, Edgar I. Sancez Medina, Anastasia O. Komarova, Steffen Linke, Liisa Rihko-Struckmann, Jeremy Luterbacher, Kai Sundmacher",
 title  ="Machine learning-supported solvent design for lignin-first biorefineries and lignin upgrading",
 journal  ="XXX",
