@@ -20,7 +20,7 @@ How to cite PSEvolve:
 ```
 @Article{XXX,
 author ="Laura König-Mattern, Edgar I. Sancez Medina, Anastasia O. Komarova, Steffen Linke, Liisa Rihko-Struckmann, Jeremy Luterbacher, Kai Sundmacher",
-title  ="Machine-guided solvent design for lignin-first biorefineries and lignin upgrading",
+title  ="Machine learning-supported solvent design for lignin-first biorefineries and lignin upgrading",
 journal  ="Nature Chemical Engineering (submitted)",
 year  ="2024"
 }
@@ -29,7 +29,7 @@ year  ="2024"
 ```
 @Article{XXX,
 author ="Laura König-Mattern, Edgar I. Sancez Medina, Anastasia O. Komarova, Steffen Linke, Liisa Rihko-Struckmann, Jeremy Luterbacher, Kai Sundmacher",
-title  ="Machine-guided solvent design for lignin-first biorefineries and lignin upgrading",
+title  ="Machine learning-supported solvent design for lignin-first biorefineries and lignin upgrading",
 journal  ="XXX",
 year  ="XXX",
 volume  ="X",
@@ -51,4 +51,5 @@ The following packages are required:
 
 ## License 
 
-This material is licensed under the [MIT License](LICENSE) and is free and provided as-is. If you use the code provided in this repository please cite the original publication.
+This material is licensed under the [MIT License](LICENSE) and is free and provided as-is. <br />
+If you use the code provided in this repository please cite the original publication.
