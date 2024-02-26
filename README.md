@@ -26,22 +26,7 @@ journal  ="Nature Chemical Engineering (submitted)",
 year  ="2024"
 }
 
-<!--- 
 ```
-@Article{
-author ="Laura König-Mattern, Edgar I. Sancez Medina, Anastasia O. Komarova, Steffen Linke, Liisa Rihko-Struckmann, Jeremy Luterbacher, Kai Sundmacher",
-title  ="Machine learning-supported solvent design for lignin-first biorefineries and lignin upgrading",
-journal  ="XXX",
-year  ="XXX",
-volume  ="X",
-issue  ="X",
-pages  ="XX",
-publisher  ="XXX",
-doi  ="XXX",
-url  ="XXX"}
-
-```
--->
 ## Requirements
 
 The following packages are required:
