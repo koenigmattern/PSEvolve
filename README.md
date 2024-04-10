@@ -22,7 +22,7 @@ How to cite PSEvolve:
 @Article{
 author ="Laura König-Mattern, Edgar I. Sancez Medina, Anastasia O. Komarova, Steffen Linke, Liisa Rihko-Struckmann, Jeremy Luterbacher, Kai Sundmacher",
 title  ="Machine learning-supported solvent design for lignin-first biorefineries and lignin upgrading",
-journal  ="Nature Communications (submitted)",
+journal  ="Chemical Engineering Journal (submitted)",
 year  ="2024"
 }
 ```
