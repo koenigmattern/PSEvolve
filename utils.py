@@ -604,8 +604,9 @@ def cross_over(df_pop, num_parents, num_children, max_mol_weight, group_constrai
     for idx in selected_idxs:
 
         mol = df_pop.loc[idx, 'mol']
+        copy_mol = copy.deepcopy(mol)
 
-        frag_mol, flag_successful = fragmentor(mol)
+        frag_mol, flag_successful = fragmentor(copy_mol)
 
         if flag_successful == 1:
             frags = Chem.GetMolFrags(frag_mol, asMols=True)
